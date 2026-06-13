@@ -1,0 +1,6 @@
+{
+  "name": "Production Dashboard",
+  "description": "PTM Agriculture Production Dashboard with Google Sheets integration and OEE analytics.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

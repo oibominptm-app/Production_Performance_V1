@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans Thai", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-gold: #C4A661;
+  --color-gold-hover: #D4B671;
+  --color-bg-base: #0A0A0B;
+  --color-bg-surface: #0F0F11;
+  --color-bg-sidebar: #0D0D0F;
+  --color-bg-card: #050506;
+  --color-border-dark: rgba(255, 255, 255, 0.1);
+}
+
+/* Custom background animations or glassmorphic adjustments if needed */
+body {
+  background-color: #0A0A0B;
+  color: #D1D1D1;
+  font-family: var(--font-sans);
+}

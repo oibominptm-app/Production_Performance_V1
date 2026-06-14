@@ -13,15 +13,16 @@ import {
   Check
 } from 'lucide-react';
 
-import { 
-  ProductionRow, 
-  DepartmentFilter, 
-  DisplayMode, 
-  ViewTab, 
-  ConnectionState, 
-  DEMO_DATA, 
-  MONTHS_TH 
+import {
+  ProductionRow,
+  DepartmentFilter,
+  DisplayMode,
+  ViewTab,
+  ConnectionState,
+  DEMO_DATA,
+  MONTHS_TH
 } from './types';
+import { extractSpreadsheetId } from './utils/sheetHelpers';
 
 import Sidebar from './components/Sidebar';
 import KPIGrid from './components/KPIGrid';
@@ -39,7 +40,9 @@ export default function App() {
   const [viewTab, setViewTab] = useState<ViewTab>('overview');
 
   // Google Sheets Connector States
-  const [sheetIdInput, setSheetIdInput] = useState('');
+  // Seed the input with the env-var ID so users see it pre-filled.
+  const envSheetId = extractSpreadsheetId(import.meta.env.VITE_SHEET_ID ?? '');
+  const [sheetIdInput, setSheetIdInput] = useState(envSheetId);
   const [sheetNameInput, setSheetNameInput] = useState('Sheet1');
   const [activeSheetId, setActiveSheetId] = useState('');
   const [activeSheetName, setActiveSheetName] = useState('Sheet1');
@@ -68,6 +71,14 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [isToastVisible]);
+
+  // Auto-connect on first render when VITE_SHEET_ID is set.
+  useEffect(() => {
+    if (envSheetId) {
+      connectGoogleSheet(envSheetId, 'Sheet1');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle Loading Simulation or Google Sheets parsing
   const loadDemoData = () => {
@@ -299,12 +310,7 @@ export default function App() {
   };
 
   const connectGoogleSheet = async (rawId: string, name: string) => {
-    let id = rawId.trim();
-    // Auto-extract Spreadsheet ID if a full Google Sheets URL is pasted
-    const urlMatch = id.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    if (urlMatch) {
-      id = urlMatch[1];
-    }
+    const id = extractSpreadsheetId(rawId);
 
     if (!id) {
       showToast('กรุณากรอกคีย์ Sheet ID ของท่าน', 'err');

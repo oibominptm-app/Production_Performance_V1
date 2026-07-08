@@ -33,6 +33,10 @@ export default function KPIGrid({ data, dept }: KPIGridProps) {
   
   // Custom formatters
   const fmt = (n: number) => n.toLocaleString('th-TH');
+  const fmtTons = (n: number) => {
+    if (!n) return '0.00';
+    return (n / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
   const fmtK = (n: number) => {
     if (!n) return '—';
     if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
@@ -97,19 +101,19 @@ export default function KPIGrid({ data, dept }: KPIGridProps) {
         </div>
       </div>
 
-      {/* KPI 3: Production piececount */}
+      {/* KPI 3: Production volume in tons */}
       <div className="bg-[#0D0D0F] border border-white/10 rounded-xl p-5 relative overflow-hidden group hover:border-[#C4A661]/35 transition-colors">
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#C4A661]/40 opacity-70" />
         <div className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-2">
           จำนวนการผลิตรวม ({dept === 'all' ? 'PD:A+B' : dept === 'A' ? 'ฝ่าย A' : 'ฝ่าย B'})
         </div>
         <div className="text-3xl font-serif font-medium text-[#e8eaf2] flex items-baseline">
-          {fmtK(sumPD)}
-          <span className="text-sm font-sans font-normal text-white/40 ml-1">ชิ้น</span>
+          {fmtTons(sumPD)}
+          <span className="text-sm font-sans font-normal text-white/40 ml-1">ตัน</span>
         </div>
         <div className="text-xs text-white/30 mt-2 flex justify-between font-mono">
-          <span>ฝ่าย A: {fmtK(sumPD_A)}</span>
-          <span>ฝ่าย B: {fmtK(sumPD_B)}</span>
+          <span>ฝ่าย A: {fmtTons(sumPD_A)} ตัน</span>
+          <span>ฝ่าย B: {fmtTons(sumPD_B)} ตัน</span>
         </div>
       </div>
 

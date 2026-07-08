@@ -40,10 +40,10 @@ export default function App() {
   const [viewTab, setViewTab] = useState<ViewTab>('overview');
 
   // Google Sheets Connector States
-  const [sheetIdInput, setSheetIdInput] = useState('');
-  const [sheetNameInput, setSheetNameInput] = useState('Sheet1');
-  const [activeSheetId, setActiveSheetId] = useState('');
-  const [activeSheetName, setActiveSheetName] = useState('Sheet1');
+  const [sheetIdInput, setSheetIdInput] = useState('1P4_2nih3qQ3eIU_QO9OQcE9W29a3l_YPjUn-un6Sqy0');
+  const [sheetNameInput, setSheetNameInput] = useState('production_data_ptm.csv');
+  const [activeSheetId, setActiveSheetId] = useState('1P4_2nih3qQ3eIU_QO9OQcE9W29a3l_YPjUn-un6Sqy0');
+  const [activeSheetName, setActiveSheetName] = useState('production_data_ptm.csv');
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [connection, setConnection] = useState<ConnectionState>('demo');
 
@@ -341,6 +341,10 @@ export default function App() {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    connectGoogleSheet('1P4_2nih3qQ3eIU_QO9OQcE9W29a3l_YPjUn-un6Sqy0', 'production_data_ptm.csv');
+  }, []);
 
   const handleSyncTrigger = async () => {
     if (activeSheetId) {

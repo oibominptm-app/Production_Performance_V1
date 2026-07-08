@@ -46,10 +46,10 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
       'PL:B': r.pl_b,
       'Loss:A': lossA,
       'Loss:B': lossB,
-      'PD:A': r.pd_a,
-      'PD:B': r.pd_b,
-      'RM:A': r.rm_a,
-      'RM:B': r.rm_b,
+      'PD:A': r.pd_a / 1000,
+      'PD:B': r.pd_b / 1000,
+      'RM:A': r.rm_a / 1000,
+      'RM:B': r.rm_b / 1000,
     };
   });
 
@@ -61,10 +61,10 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
   const totalDowntime = totDL + totBM + totSTL + totOTH;
 
   const lossBreakdown = [
-    { name: 'รอวัตถุดิบ (DL)', value: totDL, color: '#C4A661' }, // Gold
-    { name: 'ซ่อมบำรุง / รั่วไหล (BM)', value: totBM, color: '#D4B671' }, // Champagne
-    { name: 'เริ่มเดินเครื่อง (STL)', value: totSTL, color: '#8E793E' }, // Deep Bronze
-    { name: 'อื่นๆ (OTH)', value: totOTH, color: '#A3A3A3' } // Steel Gray
+    { name: 'รอวัตถุดิบ (DL)', value: totDL, color: '#3B82F6' }, // Blue
+    { name: 'ซ่อมบำรุง / รั่วไหล (BM)', value: totBM, color: '#F97316' }, // Orange
+    { name: 'เริ่มเดินเครื่อง (STL)', value: totSTL, color: '#10B981' }, // Green
+    { name: 'อื่นๆ (OTH)', value: totOTH, color: '#8B5CF6' } // Purple
   ];
 
   // Specific variables for loss statistics
@@ -91,14 +91,27 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
       return (
         <div className="bg-[#0D0D0F] border border-white/10 p-3 rounded-md shadow-lg text-xs font-sans">
           <p className="font-bold text-[#e8eaf2] mb-1 font-serif">{label}</p>
-          {payload.map((item: any, i: number) => (
-            <div key={i} className="flex justify-between gap-6 py-0.5" style={{ color: item.color || item.fill }}>
-              <span className="font-medium text-white/50">{item.name}:</span>
-              <span className="font-mono font-semibold">
-                {typeof item.value === 'number' ? item.value.toLocaleString('th-TH') : item.value}
-              </span>
-            </div>
-          ))}
+          {payload.map((item: any, i: number) => {
+            const isTon = item.name.includes('ตัน') || item.name.includes('Ratio') || item.name.includes('Yield') || item.name.toLowerCase().includes('pd') || item.name.toLowerCase().includes('rm');
+            const isHour = item.name.includes('แผน') || item.name.includes('สูญเสีย') || item.name.includes('ชั่วโมง') || item.name.toLowerCase().includes('pl') || item.name.toLowerCase().includes('loss');
+            
+            const unit = isTon ? 'ตัน' : (isHour ? 'ชม.' : '');
+            
+            const formatted = typeof item.value === 'number'
+              ? item.value.toLocaleString('th-TH', { 
+                  minimumFractionDigits: isTon ? 1 : 0, 
+                  maximumFractionDigits: isTon ? 3 : 1 
+                })
+              : item.value;
+            return (
+              <div key={i} className="flex justify-between gap-6 py-0.5" style={{ color: item.color || item.fill }}>
+                <span className="font-medium text-white/50">{item.name}:</span>
+                <span className="font-mono font-semibold text-right">
+                  {formatted} {unit}
+                </span>
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -123,24 +136,24 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
             <div className="flex gap-4 items-center text-[11px] font-mono">
               {dept !== 'B' && (
                 <>
-                  <div className="flex items-center gap-1.5 text-[#C4A661]">
-                    <span className="w-2.5 h-2.5 rounded-xs bg-[#C4A661] inline-block" />
+                  <div className="flex items-center gap-1.5 text-[#2563EB]">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB] inline-block" />
                     <span>PL:A (ชั่วโมงแผน)</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[#8E793E]">
-                    <span className="w-2.5 h-1.5 rounded-xs border-t-2 border-dashed border-[#8E793E] inline-block" />
+                  <div className="flex items-center gap-1.5 text-[#38BDF8]">
+                    <span className="w-2.5 h-1.5 rounded-xs border-t-2 border-dashed border-[#38BDF8] inline-block" />
                     <span>Loss:A (ชั่วโมงสูญเสีย)</span>
                   </div>
                 </>
               )}
               {dept !== 'A' && (
                 <>
-                  <div className="flex items-center gap-1.5 text-[#A3A3A3]">
-                    <span className="w-2.5 h-2.5 rounded-xs bg-[#A3A3A3] inline-block" />
+                  <div className="flex items-center gap-1.5 text-[#F97316]">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-[#F97316] inline-block" />
                     <span>PL:B (ชั่วโมงแผน)</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[#D4B671]">
-                    <span className="w-2.5 h-1.2 rounded-xs border-t-2 border-dashed border-[#D4B671] inline-block" />
+                  <div className="flex items-center gap-1.5 text-[#EF4444]">
+                    <span className="w-2.5 h-1.2 rounded-xs border-t-2 border-dashed border-[#EF4444] inline-block" />
                     <span>Loss:B (ชั่วโมงสูญเสีย)</span>
                   </div>
                 </>
@@ -153,12 +166,12 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorPlA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C4A661" stopOpacity={0.12}/>
-                    <stop offset="95%" stopColor="#C4A661" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.12}/>
+                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorPlB" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#A3A3A3" stopOpacity={0.12}/>
-                    <stop offset="95%" stopColor="#A3A3A3" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#F97316" stopOpacity={0.12}/>
+                    <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -174,6 +187,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   fontSize={10} 
                   tickLine={false}
                   axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickFormatter={(val) => `${val} ชม.`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 
@@ -182,7 +196,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     type="monotone" 
                     dataKey="PL:A" 
                     name="แผนการทำงาน ฝ่าย A"
-                    stroke="#C4A661" 
+                    stroke="#2563EB" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorPlA)" 
@@ -193,7 +207,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     type="monotone" 
                     dataKey="Loss:A" 
                     name="เวลาสูญเสีย ฝ่าย A"
-                    stroke="#8E793E" 
+                    stroke="#38BDF8" 
                     strokeDasharray="4 3"
                     strokeWidth={2}
                     fill="none" 
@@ -205,7 +219,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     type="monotone" 
                     dataKey="PL:B" 
                     name="แผนการทำงาน ฝ่าย B"
-                    stroke="#A3A3A3" 
+                    stroke="#F97316" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorPlB)" 
@@ -216,7 +230,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     type="monotone" 
                     dataKey="Loss:B" 
                     name="เวลาสูญเสีย ฝ่าย B"
-                    stroke="#D4B671" 
+                    stroke="#EF4444" 
                     strokeWidth={2}
                     fill="none" 
                   />
@@ -319,6 +333,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     fontSize={10} 
                     tickLine={false}
                     axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    tickFormatter={(val) => `${val} ชม.`}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
@@ -327,7 +342,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     <Bar 
                       dataKey="Loss:A" 
                       name="ชั่วโมงสูญเสีย ฝ่าย A" 
-                      fill="#C4A661" 
+                      fill="#2563EB" 
                       radius={[3, 3, 0, 0]} 
                     />
                   )}
@@ -335,7 +350,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                     <Bar 
                       dataKey="Loss:B" 
                       name="ชั่วโมงสูญเสีย ฝ่าย B" 
-                      fill="#8E793E" 
+                      fill="#F97316" 
                       radius={[3, 3, 0, 0]} 
                     />
                   )}
@@ -347,23 +362,23 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-white/5">
               {dept !== 'B' && (
                 <div className="p-2 bg-[#0A0A0B] border border-white/5 rounded-lg flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#C4A661]/10 flex items-center justify-center text-[#C4A661] shrink-0 text-xs">
+                  <div className="w-8 h-8 rounded-full bg-[#2563EB]/10 flex items-center justify-center text-[#2563EB] shrink-0 text-xs">
                     💡
                   </div>
                   <div className="text-[11px] leading-tight">
                     <span className="font-semibold text-white/50 block">วิเคราะห์พีคสูญเสียสูงสุด ฝ่ายอบ A</span>
-                    เกิดในเดือน <span className="text-[#C4A661] font-bold">{highestLossA.name}</span> ปริมาณหยุดเดินเครื่องรวม <span className="text-[#C4A661] font-mono font-bold">{highestLossA.lossA} ชม.</span>
+                    เกิดในเดือน <span className="text-[#2563EB] font-bold">{highestLossA.name}</span> ปริมาณหยุดเดินเครื่องรวม <span className="text-[#2563EB] font-mono font-bold">{highestLossA.lossA} ชม.</span>
                   </div>
                 </div>
               )}
               {dept !== 'A' && (
                 <div className="p-2 bg-[#0A0A0B] border border-white/5 rounded-lg flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#8E793E]/10 flex items-center justify-center text-[#8E793E] shrink-0 text-xs">
+                  <div className="w-8 h-8 rounded-full bg-[#F97316]/10 flex items-center justify-center text-[#F97316] shrink-0 text-xs">
                     ⏳
                   </div>
                   <div className="text-[11px] leading-tight">
                     <span className="font-semibold text-white/50 block">วิเคราะห์พีคสูญเสียสูงสุด ฝ่ายอบ B</span>
-                    เกิดในเดือน <span className="text-[#8E793E] font-bold">{highestLossB.name}</span> ปริมาณหยุดเดินเครื่องรวม <span className="text-[#8E793E] font-mono font-bold">{highestLossB.lossB} ชม.</span>
+                    เกิดในเดือน <span className="text-[#F97316] font-bold">{highestLossB.name}</span> ปริมาณหยุดเดินเครื่องรวม <span className="text-[#F97316] font-mono font-bold">{highestLossB.lossB} ชม.</span>
                   </div>
                 </div>
               )}
@@ -380,16 +395,16 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
       {/* Target output vs Raw Material input graphs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         
-        {/* PD: Production piececount bar chart */}
+        {/* PD: Production volume bar chart */}
         <div className="bg-[#0D0D0F] border border-white/10 rounded-xl p-5">
           <div className="mb-4">
             <div className="text-sm font-semibold text-[#e8eaf2] font-serif flex items-center gap-2">
               <Package className="w-4 h-4 text-[#C4A661]" />
               <span>จำนวนการผลิตรวมสะสม (Production Output - PD)</span>
             </div>
-            <div className="text-xs text-white/40">ปริมาณการผลิตรายเดือนจำแนกตามฝ่าย (หน่วย: ชิ้น)</div>
+            <div className="text-xs text-white/40">ปริมาณการผลิตรายเดือนจำแนกตามฝ่าย (หน่วย: ตัน)</div>
           </div>
-
+ 
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -406,6 +421,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   fontSize={10} 
                   tickLine={false}
                   axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickFormatter={(val) => `${val} ตัน`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
@@ -413,16 +429,16 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                 {dept !== 'B' && (
                   <Bar 
                     dataKey="PD:A" 
-                    name="ฝ่ายผลิต A (ชิ้น)" 
-                    fill="#C4A661" 
+                    name="ฝ่ายผลิต A (ตัน)" 
+                    fill="#2563EB" 
                     radius={[4, 4, 0, 0]} 
                   />
                 )}
                 {dept !== 'A' && (
                   <Bar 
                     dataKey="PD:B" 
-                    name="ฝ่ายผลิต B (ชิ้น)" 
-                    fill="#8E793E" 
+                    name="ฝ่ายผลิต B (ตัน)" 
+                    fill="#EF4444" 
                     radius={[4, 4, 0, 0]} 
                   />
                 )}
@@ -430,17 +446,17 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
             </ResponsiveContainer>
           </div>
         </div>
-
+ 
         {/* RM: Raw materials handled bar chart */}
         <div className="bg-[#0D0D0F] border border-white/10 rounded-xl p-5">
           <div className="mb-4">
             <div className="text-sm font-semibold text-[#e8eaf2] font-serif flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#D4B671]" />
+              <Layers className="w-4 h-4 text-[#06B6D4]" />
               <span>น้ำหนักวัตถุดิบที่ใช้เตรียมการผลิต (Raw Material - RM)</span>
             </div>
-            <div className="text-xs text-white/40">น้ำหนักกิโลกรัมวัตถุดิบป้อนเข้าเครื่องจักรเพื่อการแปรผลผลิต (kg)</div>
+            <div className="text-xs text-white/40">น้ำหนักวัตถุดิบป้อนเข้าเครื่องจักรเพื่อการแปรผลผลิต (หน่วย: ตัน)</div>
           </div>
-
+ 
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -457,6 +473,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   fontSize={10} 
                   tickLine={false}
                   axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickFormatter={(val) => `${val} ตัน`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
@@ -464,16 +481,16 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                 {dept !== 'B' && (
                   <Bar 
                     dataKey="RM:A" 
-                    name="วัตถุดิบป้อน ฝ่าย A (กก.)" 
-                    fill="#D4B671" 
+                    name="วัตถุดิบป้อน ฝ่าย A (ตัน)" 
+                    fill="#06B6D4" 
                     radius={[4, 4, 0, 0]} 
                   />
                 )}
                 {dept !== 'A' && (
                   <Bar 
                     dataKey="RM:B" 
-                    name="วัตถุดิบป้อน ฝ่าย B (กก.)" 
-                    fill="#A3A3A3" 
+                    name="วัตถุดิบป้อน ฝ่าย B (ตัน)" 
+                    fill="#F97316" 
                     radius={[4, 4, 0, 0]} 
                   />
                 )}
@@ -482,46 +499,46 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
           </div>
         </div>
       </div>
-
+ 
       {/* Dynamic Conversion Ratio Efficiency dashboard card (Yield analysis) */}
       <div className="bg-[#0D0D0F] border border-white/10 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <Lightbulb className="w-5 h-5 text-[#C4A661]" />
           <div>
             <span className="text-sm font-semibold text-[#e8eaf2] font-serif block">วิเคราะห์ประสิทธิภาพแปรสภาพผลผลิต (Yield and Conversion Index)</span>
-            <span className="text-xs text-white/40">คำนวณอัตราความแม่นยำในการเปลี่ยนน้ำหนักวัตถุดิบ 1 กิโลกรัมเป็นหน่วยสินค้าที่เสร็จสมบูรณ์ (ชิ้นสำเร็จ / กก.วัตถุดิบ)</span>
+            <span className="text-xs text-white/40">คำนวณอัตราความแม่นยำในการเปลี่ยนน้ำหนักวัตถุดิบ 1 ตันเป็นหน่วยสินค้าที่เสร็จสมบูรณ์ (ตันสำเร็จ / ตันวัตถุดิบ)</span>
           </div>
         </div>
-
+ 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           {dept !== 'B' && (
             <div className="p-4 bg-[#0A0A0B] border border-white/5 rounded-xl flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white/60">อัตรารับผลตอบแทน ฝ่าย A (Ratio A)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#C4A661]/10 text-[#C4A661] border border-[#C4A661]/25">เสถียรภาพ</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] border border-[#2563EB]/25">เสถียรภาพ</span>
               </div>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-semibold font-mono text-[#C4A661]">{yieldA}</span>
-                <span className="text-xs text-white/30 font-sans">ชิ้นสำเร็จ ต่อ 1 กก. วัตถุดิบปลิว</span>
+                <span className="text-2xl font-semibold font-mono text-[#2563EB]">{yieldA}</span>
+                <span className="text-xs text-white/30 font-sans">ตันสำเร็จ ต่อ 1 ตันวัตถุดิบ</span>
               </div>
               <p className="text-[11px] text-white/30 leading-relaxed mt-1">
-                จากปริมาณการผลิตสะสม {totPD_A.toLocaleString('th-TH')} ชื้น ภายใต้การเตรียมใช้ส่วนผสมป้อนเตาจำนวน {totRM_A.toLocaleString('th-TH')} กิโลกรัม
+                จากปริมาณการผลิตสะสม {(totPD_A / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} ตัน ภายใต้การเตรียมใช้ส่วนผสมป้อนเตาจำนวน {(totRM_A / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} ตัน
               </p>
             </div>
           )}
-
+ 
           {dept !== 'A' && (
             <div className="p-4 bg-[#0A0A0B] border border-white/5 rounded-xl flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white/60">อัตรารับผลตอบแทน ฝ่าย B (Ratio B)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4B671]/10 text-[#D4B671] border border-[#D4B671]/25">มีประสิทธิภาพ</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/25">มีประสิทธิภาพ</span>
               </div>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-semibold font-mono text-[#D4B671]">{yieldB}</span>
-                <span className="text-xs text-white/30 font-sans">ชิ้นสำเร็จ ต่อ 1 กก. วัตถุดิบปลิว</span>
+                <span className="text-2xl font-semibold font-mono text-[#EF4444]">{yieldB}</span>
+                <span className="text-xs text-white/30 font-sans">ตันสำเร็จ ต่อ 1 ตันวัตถุดิบ</span>
               </div>
               <p className="text-[11px] text-white/30 leading-relaxed mt-1">
-                จากปริมาณการผลิตสะสม {totPD_B.toLocaleString('th-TH')} ชิ้น ภายใต้การเตรียมใช้ส่วนผสมป้อนเตาจำนวน {totRM_B.toLocaleString('th-TH')} กิโลกรัม
+                จากปริมาณการผลิตสะสม {(totPD_B / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} ตัน ภายใต้การเตรียมใช้ส่วนผสมป้อนเตาจำนวน {(totRM_B / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} ตัน
               </p>
             </div>
           )}

@@ -10,19 +10,19 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Database,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
 
-import {
-  ProductionRow,
-  DepartmentFilter,
-  DisplayMode,
-  ViewTab,
-  ConnectionState,
-  DEMO_DATA,
-  MONTHS_TH
+import { 
+  ProductionRow, 
+  DepartmentFilter, 
+  DisplayMode, 
+  ViewTab, 
+  ConnectionState, 
+  DEMO_DATA, 
+  MONTHS_TH 
 } from './types';
-import { extractSpreadsheetId } from './utils/sheetHelpers';
 
 import Sidebar from './components/Sidebar';
 import KPIGrid from './components/KPIGrid';
@@ -40,9 +40,7 @@ export default function App() {
   const [viewTab, setViewTab] = useState<ViewTab>('overview');
 
   // Google Sheets Connector States
-  // Seed the input with the env-var ID so users see it pre-filled.
-  const envSheetId = extractSpreadsheetId(import.meta.env.VITE_SHEET_ID ?? '');
-  const [sheetIdInput, setSheetIdInput] = useState(envSheetId);
+  const [sheetIdInput, setSheetIdInput] = useState('');
   const [sheetNameInput, setSheetNameInput] = useState('Sheet1');
   const [activeSheetId, setActiveSheetId] = useState('');
   const [activeSheetName, setActiveSheetName] = useState('Sheet1');
@@ -71,14 +69,6 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [isToastVisible]);
-
-  // Auto-connect on first render when VITE_SHEET_ID is set.
-  useEffect(() => {
-    if (envSheetId) {
-      connectGoogleSheet(envSheetId, 'Sheet1');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Handle Loading Simulation or Google Sheets parsing
   const loadDemoData = () => {
@@ -310,7 +300,12 @@ export default function App() {
   };
 
   const connectGoogleSheet = async (rawId: string, name: string) => {
-    const id = extractSpreadsheetId(rawId);
+    let id = rawId.trim();
+    // Auto-extract Spreadsheet ID if a full Google Sheets URL is pasted
+    const urlMatch = id.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (urlMatch) {
+      id = urlMatch[1];
+    }
 
     if (!id) {
       showToast('กรุณากรอกคีย์ Sheet ID ของท่าน', 'err');
@@ -382,6 +377,76 @@ export default function App() {
 
   // Perform filtration across active months
   const filteredData = allData.filter(d => selectedMonths.has(d.month));
+
+  // --- Dynamic Insight Summary Calculations ---
+  const getDynamicInsight = (): string => {
+    if (filteredData.length === 0) return 'ไม่มีข้อมูลเพียงพอสำหรับการประเมินในขณะนี้';
+
+    const monthOrder = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const activeMonthsArray = Array.from(selectedMonths) as string[];
+    const activeMonthsSorted = activeMonthsArray.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+
+    const monthsThTyped = MONTHS_TH as Record<string, string>;
+
+    let monthRangeStr = '';
+    if (activeMonthsSorted.length === 0) {
+      monthRangeStr = 'ช่วงเวลาที่กำหนด';
+    } else if (activeMonthsSorted.length === 1) {
+      monthRangeStr = `เดือน ${monthsThTyped[activeMonthsSorted[0]] || activeMonthsSorted[0]}`;
+    } else {
+      let isContiguous = true;
+      const startIdx = monthOrder.indexOf(activeMonthsSorted[0]);
+      for (let i = 1; i < activeMonthsSorted.length; i++) {
+        if (monthOrder.indexOf(activeMonthsSorted[i]) !== startIdx + i) {
+          isContiguous = false;
+          break;
+        }
+      }
+      if (isContiguous) {
+        monthRangeStr = `ช่วง ${monthsThTyped[activeMonthsSorted[0]] || activeMonthsSorted[0]}-${monthsThTyped[activeMonthsSorted[activeMonthsSorted.length - 1]] || activeMonthsSorted[activeMonthsSorted.length - 1]}`;
+      } else {
+        monthRangeStr = `ช่วงเดือน ${activeMonthsSorted.map(m => monthsThTyped[m] || m).join(', ')}`;
+      }
+    }
+
+    const totalPL_A = filteredData.reduce((s, r) => s + r.pl_a, 0);
+    const totalPL_B = filteredData.reduce((s, r) => s + r.pl_b, 0);
+    const totalLoss_A = filteredData.reduce((s, r) => s + r.dl_a + r.bm_a + r.stl_a + r.oth_a, 0);
+    const totalLoss_B = filteredData.reduce((s, r) => s + r.dl_b + r.bm_b + r.stl_b + r.oth_b, 0);
+    const totalPD_A = filteredData.reduce((s, r) => s + r.pd_a, 0);
+    const totalPD_B = filteredData.reduce((s, r) => s + r.pd_b, 0);
+    const totalRM_A = filteredData.reduce((s, r) => s + r.rm_a, 0);
+    const totalRM_B = filteredData.reduce((s, r) => s + r.rm_b, 0);
+
+    const oeeRows = filteredData.filter(r => (r.oee1 + r.oee2 + r.oee3 + r.oee4) > 0);
+    const oeeAvgTotal = oeeRows.length
+      ? oeeRows.reduce((acc, r) => {
+          const activeVals = [r.oee1, r.oee2, r.oee3, r.oee4].filter(v => v > 0);
+          const rowAvg = activeVals.length ? activeVals.reduce((a, b) => a + b, 0) / activeVals.length : 0;
+          return acc + rowAvg;
+        }, 0) / oeeRows.length
+      : 0;
+
+    const delayPctB = totalPL_B > 0 ? ((filteredData.reduce((s, r) => s + r.dl_b, 0) / totalPL_B) * 100) : 0;
+    const yieldAVal = totalRM_A > 0 ? (totalPD_A / totalRM_A) : 0;
+    const yieldBVal = totalRM_B > 0 ? (totalPD_B / totalRM_B) : 0;
+
+    if (selectedDept === 'B') {
+      const oeeValStr = oeeAvgTotal > 0 ? `${oeeAvgTotal.toFixed(1)}%` : '—';
+      const delayPctBStr = delayPctB > 0 ? `${delayPctB.toFixed(1)}%` : '0.0%';
+      return `${monthRangeStr} ฝ่ายผลิต B ทำยอดทะลุเป้า OEE เฉลี่ยอยู่ที่ ${oeeValStr} โดยมีสัดส่วนเวลาสูญเสียจากวัตถุดิบคิดเป็น ${delayPctBStr} ของแผนงานทั้งหมด`;
+    } else if (selectedDept === 'A') {
+      const pdTonsStr = (totalPD_A / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      const yieldAStr = yieldAVal > 0 ? yieldAVal.toFixed(3) : '—';
+      return `ฝ่ายผลิต A มีปริมาณการผลิตสะสมสูงสุดที่ ${pdTonsStr} ตัน และควบคุม Yield ได้ดีเยี่ยมตามมาตรฐาน อยู่ที่ ${yieldAStr} ตันสำเร็จ/ตันวัตถุดิบ`;
+    } else {
+      const totPDTonsStr = ((totalPD_A + totalPD_B) / 1000).toLocaleString('th-TH', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      const yieldAStr = yieldAVal > 0 ? yieldAVal.toFixed(3) : '—';
+      const yieldBStr = yieldBVal > 0 ? yieldBVal.toFixed(3) : '—';
+      const lossPctAll = ((totalLoss_A + totalLoss_B) / ((totalPL_A + totalPL_B) || 1) * 100).toFixed(1);
+      return `ในช่วง ${monthRangeStr} ทั้งสองฝ่ายผลิตสามารถทำยอดเอาต์พุตสะสมรวมได้ ${totPDTonsStr} ตัน โดยมีประสิทธิภาพ OEE ภาพรวมทั้งโรงงานอยู่ที่ ${oeeAvgTotal.toFixed(1)}% ควบคุมสูญเสียเวลารวมอยู่ที่ ${lossPctAll}% พร้อมรักษาสัดส่วน Yield ฝ่าย A ที่ ${yieldAStr} และฝ่าย B ที่ ${yieldBStr} ตันสำเร็จ/ตันวัตถุดิบ`;
+    }
+  };
 
    return (
     <div className="flex min-h-screen bg-[#080809] text-[#e8eaf2] font-sans antialiased">
@@ -648,16 +713,35 @@ export default function App() {
                   {viewTab === 'production' && (
                     <>
                       <DashboardCharts data={filteredData} dept={selectedDept} tab={viewTab} />
-                      <div className="bg-[#0A0A0B] border border-white/10 p-4 rounded-xl flex items-center gap-3.5 text-xs text-white/40 max-w-xl">
-                        <Info className="w-4 h-4 text-[#C4A661] shrink-0" />
-                        <span>ฝ่ายผลิตเครื่องจักรและจัดเตรียม (A+B) ครอบคลุมปริมาณป้อนเตาอบ หมุน ม้วน และสลิตเตอร์ตัดแบ่งกระบวนการ</span>
-                      </div>
                     </>
                   )}
                 </>
               ) : (
                 <DataTable data={filteredData} />
               )}
+
+              {/* Dynamic Insight Summary Box */}
+              <div id="dynamic-insight-summary-card" className="bg-[#0C0C0E] border border-[#C4A661]/25 rounded-xl p-5 relative overflow-hidden group hover:border-[#C4A661]/40 transition-all duration-300 shadow-lg shadow-[#C4A661]/3">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#C4A661]/30 via-[#D4B671]/50 to-[#C4A661]/30" />
+                <div className="flex gap-4 items-start">
+                  <div className="p-2 rounded-lg bg-[#C4A661]/10 text-[#C4A661] shrink-0">
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold tracking-widest uppercase text-[#C4A661] font-sans">
+                        กล่องสรุปข้อมูลเชิงลึกอัจฉริยะ (Dynamic Insight Summary)
+                      </span>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#C4A661]/10 text-[#C4A661] border border-[#C4A661]/20 font-sans">
+                        REAL-TIME INSIGHTS
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/85 leading-relaxed font-sans font-medium">
+                      {getDynamicInsight()}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="bg-[#0A0A0B] border border-white/10 p-16 rounded-2xl text-center flex flex-col items-center justify-center gap-4">

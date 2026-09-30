@@ -10,11 +10,9 @@ export default function DataTable({ data }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Suffix formatters
-  const fmtK = (n: number) => {
+  const fmtTonsVal = (n: number) => {
     if (!n) return '—';
-    if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return n.toString();
+    return (n / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const filteredRows = data.filter(r => {
@@ -69,10 +67,10 @@ export default function DataTable({ data }: DataTableProps) {
               <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider">OEE#2</th>
               <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider">OEE#3</th>
               <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider">OEE#4</th>
-              <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider text-[#C4A661]">PD:A</th>
-              <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider text-[#D4B671]">PD:B</th>
-              <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider text-[#8E793E]">RM:A</th>
-              <th className="p-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-wider text-[#A3A3A3]">RM:B</th>
+              <th className="p-3 text-right text-[10px] font-bold text-[#C4A661] uppercase tracking-wider">PD:A (ตัน)</th>
+              <th className="p-3 text-right text-[10px] font-bold text-[#D4B671] uppercase tracking-wider">PD:B (ตัน)</th>
+              <th className="p-3 text-right text-[10px] font-bold text-[#8E793E] uppercase tracking-wider">RM:A (ตัน)</th>
+              <th className="p-3 text-right text-[10px] font-bold text-[#A3A3A3] uppercase tracking-wider">RM:B (ตัน)</th>
               <th className="p-3 text-center text-[10px] font-bold text-white/40 uppercase tracking-wider">สถานะ</th>
             </tr>
           </thead>
@@ -121,10 +119,10 @@ export default function DataTable({ data }: DataTableProps) {
                     <td className="p-3 text-right text-xs font-mono text-white/60">{r.oee3 > 0 ? r.oee3.toFixed(1) : '—'}</td>
                     <td className="p-3 text-right text-xs font-mono text-white/60">{r.oee4 > 0 ? r.oee4.toFixed(1) : '—'}</td>
                     
-                    <td className="p-3 text-right text-xs font-mono font-medium text-[#C4A661]">{fmtK(r.pd_a)}</td>
-                    <td className="p-3 text-right text-xs font-mono font-medium text-[#D4B671]">{fmtK(r.pd_b)}</td>
-                    <td className="p-3 text-right text-xs font-mono text-[#8E793E]">{fmtK(r.rm_a)}</td>
-                    <td className="p-3 text-right text-xs font-mono text-[#A3A3A3]">{fmtK(r.rm_b)}</td>
+                    <td className="p-3 text-right text-xs font-mono font-medium text-[#C4A661]">{fmtTonsVal(r.pd_a)}</td>
+                    <td className="p-3 text-right text-xs font-mono font-medium text-[#D4B671]">{fmtTonsVal(r.pd_b)}</td>
+                    <td className="p-3 text-right text-xs font-mono text-[#8E793E]">{fmtTonsVal(r.rm_a)}</td>
+                    <td className="p-3 text-right text-xs font-mono text-[#A3A3A3]">{fmtTonsVal(r.rm_b)}</td>
                     
                     <td className="p-3 text-center">
                       <span className={`inline-flex px-2 py-0.5 text-[10px] font-bold rounded-sm border font-sans ${ratingClass}`}>

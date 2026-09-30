@@ -67,7 +67,7 @@ export default function ExportModal({
   const generateEmailBodyText = () => {
     const lossPct = totalPL > 0 ? ((totalLoss / totalPL) * 100).toFixed(1) : '—';
     const detailRows = data.map(r => 
-      `${r.month} | PL:A=${r.pl_a} PL:B=${r.pl_b} | Loss:A=${r.dl_a+r.bm_a+r.stl_a+r.oth_a} Loss:B=${r.dl_b+r.bm_b+r.stl_b+r.oth_b} | OEE: ${r.oee1.toFixed(1)}% ${r.oee2.toFixed(1)}% ${r.oee3.toFixed(1)}% ${r.oee4.toFixed(1)}% | PD:A=${r.pd_a.toLocaleString()} PD:B=${r.pd_b.toLocaleString()}`
+      `${r.month} | PL:A=${r.pl_a} PL:B=${r.pl_b} | Loss:A=${r.dl_a+r.bm_a+r.stl_a+r.oth_a} Loss:B=${r.dl_b+r.bm_b+r.stl_b+r.oth_b} | OEE: ${r.oee1.toFixed(1)}% ${r.oee2.toFixed(1)}% ${r.oee3.toFixed(1)}% ${r.oee4.toFixed(1)}% | PD:A=${(r.pd_a / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน PD:B=${(r.pd_b / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน`
     ).join('\n');
 
     return `สวัสดีครับ,
@@ -81,7 +81,7 @@ ${emailNote ? emailNote + '\n\n' : ''}รายงานข้อมูลกา
 ====================================
 แผนการเดินเครื่องทั้งหมด : ${totalPL.toLocaleString('th-TH')} ชั่วโมง
 เวลาการสูญเสียทั้งหมด   : ${totalLoss.toLocaleString('th-TH')} ชั่วโมง (${lossPct}%)
-จำนวนการผลิตทั้งหมด   : ${totalPD.toLocaleString('th-TH')} ชิ้น
+จำนวนการผลิตทั้งหมด   : ${(totalPD / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน
 OEE ประสิทธิภาพเฉลี่ยรวม : ${oeeAvg}%
 
 ====================================
@@ -333,8 +333,8 @@ ${detailRows}
                         <th className="p-2 text-right">PL:B</th>
                         <th className="p-2 text-right">Loss:A</th>
                         <th className="p-2 text-right">Loss:B</th>
-                        <th className="p-2 text-right text-[#C4A661]">PD:A</th>
-                        <th className="p-2 text-right text-[#D4B671]">PD:B</th>
+                        <th className="p-2 text-right text-[#C4A661]">PD:A (ตัน)</th>
+                        <th className="p-2 text-right text-[#D4B671]">PD:B (ตัน)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-[10.5px]">
@@ -348,8 +348,8 @@ ${detailRows}
                             <td className="p-2 text-right font-mono">{r.pl_b}</td>
                             <td className="p-2 text-right font-mono">{lossA}</td>
                             <td className="p-2 text-right font-mono">{lossB}</td>
-                            <td className="p-2 text-right font-mono text-[#C4A661]">{r.pd_a.toLocaleString()}</td>
-                            <td className="p-2 text-right font-mono text-[#D4B671]">{r.pd_b.toLocaleString()}</td>
+                            <td className="p-2 text-right font-mono text-[#C4A661]">{(r.pd_a / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className="p-2 text-right font-mono text-[#D4B671]">{(r.pd_b / 1000).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           </tr>
                         )
                       })}

@@ -14,7 +14,8 @@ import {
   Bar,
   Legend,
   LineChart,
-  Line
+  Line,
+  ComposedChart
 } from 'recharts';
 import { 
   Wrench, 
@@ -24,7 +25,9 @@ import {
   Layers, 
   Thermometer, 
   AlertTriangle,
-  Lightbulb
+  Lightbulb,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { ProductionRow, DepartmentFilter, MONTHS_TH, ViewTab } from '../types';
 
@@ -39,6 +42,9 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
   const chartData = data.map(r => {
     const lossA = r.dl_a + r.bm_a + r.stl_a + r.oth_a;
     const lossB = r.dl_b + r.bm_b + r.stl_b + r.oth_b;
+    const pdA_tons = r.pd_a / 1000;
+    const pdB_tons = r.pd_b / 1000;
+    const pdTotal_tons = (r.pd_a + r.pd_b) / 1000;
     return {
       name: MONTHS_TH[r.month] || r.month,
       month: r.month,
@@ -46,10 +52,14 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
       'PL:B': r.pl_b,
       'Loss:A': lossA,
       'Loss:B': lossB,
-      'PD:A': r.pd_a / 1000,
-      'PD:B': r.pd_b / 1000,
+      'PD:A': pdA_tons,
+      'PD:B': pdB_tons,
+      'PD:Total': pdTotal_tons,
       'RM:A': r.rm_a / 1000,
       'RM:B': r.rm_b / 1000,
+      pdA_tons,
+      pdB_tons,
+      pdTotal_tons,
     };
   });
 
@@ -112,6 +122,76 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
               </div>
             );
           })}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Specific output variables for overview production chart
+  const overviewPD_A = data.reduce((s, r) => s + r.pd_a, 0) / 1000;
+  const overviewPD_B = data.reduce((s, r) => s + r.pd_b, 0) / 1000;
+  const overviewPD_Total = dept === 'A' ? overviewPD_A : dept === 'B' ? overviewPD_B : overviewPD_A + overviewPD_B;
+  const overviewAvgMonthly = data.length > 0 ? overviewPD_Total / data.length : 0;
+
+  // Custom Dynamic Tooltip for Monthly Production Output Chart
+  const ProductionOverviewTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = payload[0]?.payload;
+      if (!dataPoint) return null;
+
+      const pdA = typeof dataPoint.pdA_tons === 'number' ? dataPoint.pdA_tons : (dataPoint['PD:A'] || 0);
+      const pdB = typeof dataPoint.pdB_tons === 'number' ? dataPoint.pdB_tons : (dataPoint['PD:B'] || 0);
+      const pdTotal = typeof dataPoint.pdTotal_tons === 'number' ? dataPoint.pdTotal_tons : (pdA + pdB);
+
+      return (
+        <div className="bg-[#0D0D0F] border border-[#C4A661]/35 p-3.5 rounded-xl shadow-2xl text-xs min-w-[220px] space-y-2.5 font-sans">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <span className="font-serif font-bold text-[#e8eaf2] text-sm">
+              เดือน {label} ({dataPoint.month})
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#C4A661]/10 text-[#C4A661] border border-[#C4A661]/25">
+              หน่วย: ตัน
+            </span>
+          </div>
+
+          <div className="space-y-1.5 font-mono text-[11.5px]">
+            {dept !== 'B' && (
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB] inline-block shrink-0" />
+                  <span className="font-sans text-white/70">ฝ่ายผลิต A:</span>
+                </div>
+                <span className="font-bold text-[#60A5FA]">
+                  {pdA.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน
+                </span>
+              </div>
+            )}
+
+            {dept !== 'A' && (
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#F97316] inline-block shrink-0" />
+                  <span className="font-sans text-white/70">ฝ่ายผลิต B:</span>
+                </div>
+                <span className="font-bold text-[#FB923C]">
+                  {pdB.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน
+                </span>
+              </div>
+            )}
+
+            <div className="border-t border-white/10 pt-2 flex justify-between items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs bg-[#C4A661] inline-block shrink-0" />
+                <span className="font-sans font-semibold text-white/90">
+                  {dept === 'all' ? 'ยอดรวม (A+B):' : dept === 'A' ? 'ยอดรวม ฝ่าย A:' : 'ยอดรวม ฝ่าย B:'}
+                </span>
+              </div>
+              <span className="font-bold text-[#D4B671]">
+                {(dept === 'A' ? pdA : dept === 'B' ? pdB : pdTotal).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ตัน
+              </span>
+            </div>
+          </div>
         </div>
       );
     }
@@ -195,7 +275,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   <Area 
                     type="monotone" 
                     dataKey="PL:A" 
-                    name="แผนการทำงาน ฝ่าย A"
+                    name="แผนการทำงาน ฝ่าย A" 
                     stroke="#2563EB" 
                     strokeWidth={2}
                     fillOpacity={1} 
@@ -206,7 +286,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   <Area 
                     type="monotone" 
                     dataKey="Loss:A" 
-                    name="เวลาสูญเสีย ฝ่าย A"
+                    name="เวลาสูญเสีย ฝ่าย A" 
                     stroke="#38BDF8" 
                     strokeDasharray="4 3"
                     strokeWidth={2}
@@ -218,7 +298,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   <Area 
                     type="monotone" 
                     dataKey="PL:B" 
-                    name="แผนการทำงาน ฝ่าย B"
+                    name="แผนการทำงาน ฝ่าย B" 
                     stroke="#F97316" 
                     strokeWidth={2}
                     fillOpacity={1} 
@@ -229,7 +309,7 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                   <Area 
                     type="monotone" 
                     dataKey="Loss:B" 
-                    name="เวลาสูญเสีย ฝ่าย B"
+                    name="เวลาสูญเสีย ฝ่าย B" 
                     stroke="#EF4444" 
                     strokeWidth={2}
                     fill="none" 
@@ -237,6 +317,155 @@ export default function DashboardCharts({ data, dept, tab }: DashboardChartsProp
                 )}
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Monthly Production Output Chart (placed right below Plan vs Loss Chart) */}
+        <div className="bg-[#0D0D0F] border border-white/10 rounded-xl p-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+            <div>
+              <div className="text-sm font-semibold text-[#e8eaf2] font-serif flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[#C4A661]" />
+                <span>กราฟแสดงยอดการผลิตรายเดือน (Monthly Production Output)</span>
+              </div>
+              <div className="text-xs text-white/40">
+                เปรียบเทียบปริมาณผลผลิตจริงระหว่างฝ่าย A และฝ่าย B รายเดือน (หน่วย: ตัน)
+              </div>
+            </div>
+
+            {/* Legend indicators */}
+            <div className="flex gap-4 items-center text-[11px] font-mono flex-wrap">
+              {dept !== 'B' && (
+                <div className="flex items-center gap-1.5 text-[#38BDF8]">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB] inline-block" />
+                  <span>ฝ่ายผลิต A (ตัน)</span>
+                </div>
+              )}
+              {dept !== 'A' && (
+                <div className="flex items-center gap-1.5 text-[#FB923C]">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#F97316] inline-block" />
+                  <span>ฝ่ายผลิต B (ตัน)</span>
+                </div>
+              )}
+              {dept === 'all' && (
+                <div className="flex items-center gap-1.5 text-[#C4A661]">
+                  <span className="w-3.5 h-1 rounded-full bg-[#C4A661] inline-block" />
+                  <span>ยอดผลิตรวม A+B (ตัน)</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="barGradA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#1D4ED8" stopOpacity={0.75} />
+                  </linearGradient>
+                  <linearGradient id="barGradB" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#FB923C" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#EA580C" stopOpacity={0.75} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="rgba(255,255,255,0.4)" 
+                  fontSize={11} 
+                  tickLine={false}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                />
+                <YAxis 
+                  stroke="rgba(255,255,255,0.4)" 
+                  fontSize={10} 
+                  tickLine={false}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickFormatter={(val) => `${Number(val).toLocaleString('th-TH')} ตัน`}
+                />
+                <Tooltip content={<ProductionOverviewTooltip />} />
+
+                {dept !== 'B' && (
+                  <Bar 
+                    dataKey="PD:A" 
+                    name="ฝ่ายผลิต A (ตัน)" 
+                    fill="url(#barGradA)" 
+                    radius={[4, 4, 0, 0]} 
+                    maxBarSize={45}
+                  />
+                )}
+                {dept !== 'A' && (
+                  <Bar 
+                    dataKey="PD:B" 
+                    name="ฝ่ายผลิต B (ตัน)" 
+                    fill="url(#barGradB)" 
+                    radius={[4, 4, 0, 0]} 
+                    maxBarSize={45}
+                  />
+                )}
+                {dept === 'all' && (
+                  <Line 
+                    type="monotone" 
+                    dataKey="PD:Total" 
+                    name="ยอดรวม A+B (ตัน)" 
+                    stroke="#C4A661" 
+                    strokeWidth={2.5}
+                    dot={{ r: 4, fill: '#C4A661', stroke: '#0D0D0F', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#D4B671', stroke: '#ffffff', strokeWidth: 2 }}
+                  />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Quick Metrics Bar underneath chart */}
+          <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div className="bg-[#0A0A0B] border border-white/5 rounded-lg p-2.5">
+              <span className="text-[10px] text-white/40 block uppercase tracking-wider">
+                ยอดผลิตรวมช่วงที่เลือก
+              </span>
+              <span className="text-sm font-bold font-mono text-[#e8eaf2]">
+                {overviewPD_Total.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                <span className="text-xs font-normal text-white/40">ตัน</span>
+              </span>
+            </div>
+
+            <div className="bg-[#0A0A0B] border border-white/5 rounded-lg p-2.5">
+              <span className="text-[10px] text-white/40 block uppercase tracking-wider">
+                เฉลี่ยต่อเดือน
+              </span>
+              <span className="text-sm font-bold font-mono text-[#C4A661]">
+                {overviewAvgMonthly.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                <span className="text-xs font-normal text-white/40">ตัน/เดือน</span>
+              </span>
+            </div>
+
+            {dept === 'all' ? (
+              <div className="bg-[#0A0A0B] border border-white/5 rounded-lg p-2.5 col-span-2 sm:col-span-1">
+                <span className="text-[10px] text-white/40 block uppercase tracking-wider">
+                  สัดส่วนผลผลิต ฝ่าย A / B
+                </span>
+                <span className="text-xs font-bold font-mono text-white/80">
+                  <span className="text-[#38BDF8]">
+                    {((overviewPD_A / (overviewPD_A + overviewPD_B || 1)) * 100).toFixed(1)}%
+                  </span>
+                  {' / '}
+                  <span className="text-[#FB923C]">
+                    {((overviewPD_B / (overviewPD_A + overviewPD_B || 1)) * 100).toFixed(1)}%
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <div className="bg-[#0A0A0B] border border-white/5 rounded-lg p-2.5 col-span-2 sm:col-span-1">
+                <span className="text-[10px] text-white/40 block uppercase tracking-wider">
+                  สถานะตัวกรองแผนก
+                </span>
+                <span className="text-xs font-bold font-mono text-[#C4A661]">
+                  กำลังแสดงเฉพาะฝ่าย {dept}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
